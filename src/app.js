@@ -34,6 +34,10 @@ const userSchema = Joi.object({
 	password: Joi.string().min(3).required()
 })
 
+const transactionSchema = Joi.object({
+	description: Joi.string().required(),
+	value: Joi.number().positive().precision(2)
+})
 // rotas
 
 // cadastro
@@ -111,7 +115,36 @@ app.delete("/sign-out", async (req, res) => {
 		if(!session) return res.status(401).send("Envie um token valido")
 
 		await db.collection("sessions").deleteOne({ token })
-		res.sendStatus(200)
+		res.send(token)
+	} catch (err) {
+		res.status(500).send(err.message)
+	}
+})
+
+app.post('/nova-transacao/:tipo', async (req, res) => {
+	const {tipo} = req.params;
+	console.log(tipo)
+	const {description, value} = req.body
+
+	const validation = transactionSchema.validate(req.body, { abortEarly: false });
+  
+	if (validation.error) {
+	  const errors = validation.error.details.map((detail) => detail.message);
+	  return res.status(422).send(errors);
+	}
+
+	const { authorization } = req.headers
+
+	const token = authorization?.replace("Bearer ","")
+
+	if(!token) return res.status(401).send("Envie o token na requisição")
+
+	try{
+		const session = await db.collection("sessions").findOne({token})
+		if(!session) return res.status(401).send("Envie um token valido")
+
+		await db.collection('transactions').insertOne({ value, description })
+		res.sendStatus(201)
 	} catch (err) {
 		res.status(500).send(err.message)
 	}

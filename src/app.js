@@ -5,6 +5,7 @@ import Joi from 'joi'
 import { MongoClient } from 'mongodb';
 import { v4 as uuid } from "uuid"
 import bcrypt from 'bcrypt'
+import dayjs from "dayjs";
 
 // criando a aplicação servidora
 const app = express()
@@ -126,7 +127,7 @@ app.delete("/sign-out", async (req, res) => {
 
 app.post('/nova-transacao/:tipo', async (req, res) => {
 	const {tipo} = req.params;
-	console.log(tipo)
+	
 	const {description, value} = req.body
 
 	const validation = transactionSchema.validate(req.body, { abortEarly: false });
@@ -142,11 +143,12 @@ app.post('/nova-transacao/:tipo', async (req, res) => {
 
 	if(!token) return res.status(401).send("Envie o token na requisição")
 
+	const date = dayjs(Date.now()).format('DD/MM')
 	try{
 		const session = await db.collection("sessions").findOne({token})
 		if(!session) return res.status(401).send("Envie um token valido")
 
-		await db.collection('transactions').insertOne({ token, value, description })
+		await db.collection('transactions').insertOne({ token, value, description, date:date, tipo:tipo, idTransaction: session.idUser })
 		res.sendStatus(201)
 	} catch (err) {
 		res.status(500).send(err.message)
@@ -155,7 +157,7 @@ app.post('/nova-transacao/:tipo', async (req, res) => {
 
 app.get('/transactions', async (req, res) => {
 	const { authorization } = req.headers
-
+	console.log(req.body)
 	const token = authorization?.replace("Bearer ","")
 
 	if(!token) return res.status(401).send("Envie o token na requisição")
@@ -164,7 +166,7 @@ app.get('/transactions', async (req, res) => {
 		const session = await db.collection("sessions").findOne({token})
 		if(!session) return res.status(401).send("Envie um token valido")
 
-		const transaction = await db.collection('transactions').findOne({ _id: session.idUser})
+		const transaction = await db.collection('transactions').find({idTransaction:session.idUser}).toArray()
 
 		res.send(transaction)
 	} catch (err) {

@@ -76,8 +76,11 @@ app.post('/sign-in', async (req, res) => {
 		if (!passwordIsCorrect) return res.status(401).send("Senha incorreta")
 
 		const token = uuid()
-		await db.collection('sessions').insertOne({ token, idUser: user._id})
-		res.send(token)
+		
+		const obj ={ token:token , idUser: user._id, name: user.name}
+
+		await db.collection('sessions').insertOne(obj)
+		res.status(200).send(obj)
 	} catch (err) {
 		res.status(500).send(err.message)
 	}
@@ -115,7 +118,7 @@ app.delete("/sign-out", async (req, res) => {
 		if(!session) return res.status(401).send("Envie um token valido")
 
 		await db.collection("sessions").deleteOne({ token })
-		res.send(token)
+		res.sendStatus(200)
 	} catch (err) {
 		res.status(500).send(err.message)
 	}
@@ -143,8 +146,27 @@ app.post('/nova-transacao/:tipo', async (req, res) => {
 		const session = await db.collection("sessions").findOne({token})
 		if(!session) return res.status(401).send("Envie um token valido")
 
-		await db.collection('transactions').insertOne({ value, description })
+		await db.collection('transactions').insertOne({ token, value, description })
 		res.sendStatus(201)
+	} catch (err) {
+		res.status(500).send(err.message)
+	}
+})
+
+app.get('/transactions', async (req, res) => {
+	const { authorization } = req.headers
+
+	const token = authorization?.replace("Bearer ","")
+
+	if(!token) return res.status(401).send("Envie o token na requisição")
+
+	try{
+		const session = await db.collection("sessions").findOne({token})
+		if(!session) return res.status(401).send("Envie um token valido")
+
+		const transaction = await db.collection('transactions').findOne({ _id: session.idUser})
+
+		res.send(transaction)
 	} catch (err) {
 		res.status(500).send(err.message)
 	}

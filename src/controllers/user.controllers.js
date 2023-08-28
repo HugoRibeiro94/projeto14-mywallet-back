@@ -1,14 +1,7 @@
-import { db } from "../app.js"
+import { db } from "../database/databse.connection.js";
 import { v4 as uuid } from "uuid"
 import bcrypt from 'bcrypt'
-import dayjs from "dayjs";
-import Joi from 'joi'
-
-const userSchema = Joi.object({
-	name: Joi.string().required(),
-	email: Joi.string().email().required(),
-	password: Joi.string().min(3).required()
-})
+import { userSchema } from "../schemas/user.schemas.js";
 
 export async function postSignUp (req, res){
 	const {name, email, password} = req.body

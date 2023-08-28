@@ -1,13 +1,6 @@
-import { db } from "../app.js"
-import { v4 as uuid } from "uuid"
-import bcrypt from 'bcrypt'
+import { db } from "../database/databse.connection.js";
 import dayjs from "dayjs";
-import Joi from 'joi'
-
-const transactionSchema = Joi.object({
-	description: Joi.string().required(),
-	value: Joi.number().positive().precision(2)
-})
+import { transactionSchema } from "../schemas/transactions.schemas.js";
 
 export async function getTransactions (req, res){
 	const { authorization } = req.headers

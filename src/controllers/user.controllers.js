@@ -8,13 +8,6 @@ export async function postSignUp (req, res){
 
 	const passwordHash = bcrypt.hashSync(password, 10);
 
-	const validation = userSchema.validate(req.body, { abortEarly: false });
-  
-	if (validation.error) {
-	  const errors = validation.error.details.map((detail) => detail.message);
-	  return res.status(422).send(errors);
-	}
-
 	try{
 		const user = await db.collection('users').findOne({ email })
 		if(user) return res.status(409).send("Email já cadastrado")

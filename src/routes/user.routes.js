@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { deleteSignOut, getUserLogin, postSignIn, postSignUp } from "../controllers/user.controllers.js";
+import { userSchema } from "../schemas/user.schemas.js";
+import { validateSchema } from "../middlewares/validateSchema.js";
 
 const routerUser = Router()
 
-routerUser.post('/sign-up', postSignUp)
+routerUser.post('/sign-up', validateSchema(userSchema), postSignUp)
 
 routerUser.post('/sign-in', postSignIn)
 
